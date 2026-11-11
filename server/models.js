@@ -1,0 +1,9 @@
+import mongoose from 'mongoose';
+const userSchema=new mongoose.Schema({name:{type:String,required:true},email:{type:String,required:true,unique:true,lowercase:true},password:{type:String,required:true},role:{type:String,enum:['customer','admin'],default:'customer'},phone:String,address:String},{timestamps:true});
+const productSchema=new mongoose.Schema({name:{type:String,required:true},description:String,price:{type:Number,required:true},compareAt:Number,category:{type:String,default:'Essentials'},image:String,images:[String],sizes:[String],colors:[String],stock:{type:Number,default:10},sku:String,featured:{type:Boolean,default:false},active:{type:Boolean,default:true},rating:{type:Number,default:4.8},reviews:{type:Number,default:0}},{timestamps:true});
+const orderSchema=new mongoose.Schema({user:{type:mongoose.Schema.Types.ObjectId,ref:'User'},customer:{name:String,email:String,phone:String,address:String,city:String},items:[{product:{type:mongoose.Schema.Types.ObjectId,ref:'Product'},name:String,image:String,price:Number,quantity:Number,size:String,color:String}],subtotal:Number,shipping:Number,discount:Number,total:Number,paymentMethod:{type:String,default:'Cash on Delivery'},status:{type:String,enum:['Pending','Confirmed','Processing','Shipped','Delivered','Cancelled'],default:'Pending'},coupon:String,note:String},{timestamps:true});
+const couponSchema=new mongoose.Schema({code:{type:String,unique:true,uppercase:true},type:{type:String,enum:['percent','fixed'],default:'percent'},value:Number,minOrder:{type:Number,default:0},active:{type:Boolean,default:true},expiresAt:Date,usageLimit:Number,used:{type:Number,default:0}},{timestamps:true});
+export const User=mongoose.model('User',userSchema);
+export const Product=mongoose.model('Product',productSchema);
+export const Order=mongoose.model('Order',orderSchema);
+export const Coupon=mongoose.model('Coupon',couponSchema);
