@@ -1,0 +1,13 @@
+import React,{createContext,useContext,useEffect,useMemo,useState}from'react';import axios from'axios';
+const Store=createContext(null);export const api=axios.create({baseURL:'/api'});api.interceptors.request.use(c=>{const t=localStorage.getItem('so_token');if(t)c.headers.Authorization=`Bearer ${t}`;return c});
+export function StoreProvider({children}){const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem('so_user'))}catch{return null}});const [cart,setCart]=useState(()=>JSON.parse(localStorage.getItem('so_cart')||'[]'));const [wishlist,setWishlist]=useState(()=>JSON.parse(localStorage.getItem('so_wish')||'[]'));const [theme,setTheme]=useState(()=>localStorage.getItem('so_theme')||'light');const [products,setProducts]=useState([]);const [loading,setLoading]=useState(true);
+useEffect(()=>{localStorage.setItem('so_cart',JSON.stringify(cart))},[cart]);useEffect(()=>{localStorage.setItem('so_wish',JSON.stringify(wishlist))},[wishlist]);useEffect(()=>{localStorage.setItem('so_theme',theme);document.documentElement.dataset.theme=theme},[theme]);
+const refresh=async()=>{try{const r=await api.get('/products');setProducts(r.data)}catch(e){console.error(e)}finally{setLoading(false)}};useEffect(()=>{refresh()},[]);
+const login=async(email,password)=>{const{data}=await api.post('/auth/login',{email,password});localStorage.setItem('so_token',data.token);localStorage.setItem('so_user',JSON.stringify(data.user));setUser(data.user);return data.user};
+const register=async(payload)=>{const{data}=await api.post('/auth/register',payload);localStorage.setItem('so_token',data.token);localStorage.setItem('so_user',JSON.stringify(data.user));setUser(data.user);return data.user};
+const logout=()=>{localStorage.removeItem('so_token');localStorage.removeItem('so_user');setUser(null)};
+const addToCart=(p,size='',color='')=>setCart(old=>{const key=`${p._id||p.id}-${size}-${color}`;const found=old.find(x=>x.key===key);return found?old.map(x=>x.key===key?{...x,quantity:x.quantity+1}:x):[...old,{key,productId:p._id||p.id,name:p.name,price:p.price,image:p.image,size,color,quantity:1}]});
+const updateQty=(key,quantity)=>setCart(old=>old.map(x=>x.key===key?{...x,quantity:Math.max(1,Math.min(20,quantity))}:x));const removeCart=key=>setCart(old=>old.filter(x=>x.key!==key));const toggleWish=id=>setWishlist(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
+const value=useMemo(()=>({user,cart,wishlist,theme,products,loading,login,register,logout,refresh,addToCart,updateQty,removeCart,toggleWish,setTheme,setCart}),[user,cart,wishlist,theme,products,loading]);
+return <Store.Provider value={value}>{children}</Store.Provider>}
+export const useStore=()=>useContext(Store);
